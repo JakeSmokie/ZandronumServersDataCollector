@@ -5,9 +5,15 @@ using System.Linq;
 using System.Net;
 using System.Net.Sockets;
 using EncodeLibrary.Huffman;
+using ZandronumServersDataCollector.Extensions;
 
 namespace ZandronumServersDataCollector.ServerListFetchers {
     public partial class ServerListFetcher : IServerListFetcher {
+        /// <summary>
+        /// Timeout in milliseconds
+        /// </summary>
+        private const int Timeout = 2000;
+
         private static readonly HuffmanCodec
             HuffmanCodec = new HuffmanCodec(HuffmanCodec.SkulltagCompatibleHuffmanTree);
 
@@ -25,6 +31,9 @@ namespace ZandronumServersDataCollector.ServerListFetchers {
             using (var udpClient = new UdpClient()) {
                 ConnectAndSendQuery(masterServer, udpClient);
                 var recievedData = ReceivePlainData(udpClient);
+
+                if (recievedData == null)
+                    return new List<IPEndPoint>();
 
                 // check for unencoded data
                 var serverResponse =
@@ -58,9 +67,9 @@ namespace ZandronumServersDataCollector.ServerListFetchers {
 
             do {
                 IPEndPoint ip = null;
-                var buffer = udpClient.Receive(ref ip);
+                var data = udpClient.Receive(ref ip);
 
-                recievedData.AddRange(buffer);
+                recievedData.AddRange(data);
             } while (udpClient.Available != 0);
 
             return recievedData;
@@ -71,7 +80,8 @@ namespace ZandronumServersDataCollector.ServerListFetchers {
 
             if (response == MasterResponseCommands.IpIsBanned ||
                 response == MasterResponseCommands.RequestIgnored) {
-                yield break;;
+                yield break;
+                ;
             }
 
             serverResponse.BaseStream.Seek(-4, SeekOrigin.Current);

@@ -2,7 +2,7 @@
 using System.IO;
 using System.Text;
 
-namespace ZandronumServersDataCollector.BinaryReaderExtensions {
+namespace ZandronumServersDataCollector.Extensions {
     public static class BinaryReaderExtension {
         public static string ReadNullTerminatedString(this BinaryReader reader) {
             var buffer = new List<byte>();

@@ -5,10 +5,15 @@ using System.Net;
 using System.Net.Sockets;
 using System.Threading.Tasks;
 using EncodeLibrary.Huffman;
-using ZandronumServersDataCollector.BinaryReaderExtensions;
+using ZandronumServersDataCollector.Extensions;
 
 namespace ZandronumServersDataCollector.ServerDataFetchers {
     public partial class ServerDataFetcher {
+        /// <summary>
+        /// Timeout in milliseconds
+        /// </summary>
+        private const int Timeout = 1000;
+
         private static readonly HuffmanCodec HuffmanCodec =
             new HuffmanCodec(HuffmanCodec.SkulltagCompatibleHuffmanTree);
 
@@ -31,6 +36,9 @@ namespace ZandronumServersDataCollector.ServerDataFetchers {
             using (var udpClient = new UdpClient()) {
                 await ConnectAndSendQuery(server, udpClient);
                 var data = await RecievePlainData(udpClient);
+
+                if (data == null)
+                    return;
 
                 await ReadResponse(data, server, serverDatasCollection);
             }
@@ -55,25 +63,20 @@ namespace ZandronumServersDataCollector.ServerDataFetchers {
         }
 
         private static async Task<byte[]> RecievePlainData(UdpClient udpClient) {
-            var data = await udpClient.ReceiveAsync();
-            return HuffmanCodec.Decode(data.Buffer);
+            var data = await udpClient.ReceiveDataWithTimeout(Timeout);
+
+            if (data == null)
+                return null;
+
+            return HuffmanCodec.Decode(data);
         }
 
         private static Task ReadResponse(byte[] data, IPEndPoint server, List<ServerData> serverDatasCollection) {
             var response = new BinaryReader(new MemoryStream(data));
             var responseType = (ResponseTypes) response.ReadInt32();
 
-            switch (responseType) {
-                case ResponseTypes.Good:
-                    break;
-                case ResponseTypes.Wait:
-                    return Task.CompletedTask;
-                case ResponseTypes.Banned:
-                    return Task.CompletedTask;
-                default:
-                    return Task.CompletedTask;
-                    throw new ArgumentOutOfRangeException();
-            }
+            if (responseType != ResponseTypes.Good) 
+                return Task.CompletedTask;
 
             var responseTimestamp = response.ReadUInt32();
             var serverData =
