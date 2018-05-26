@@ -14,7 +14,8 @@ namespace ZandronumServersDataCollector {
             End
         }
 
-        private static readonly HuffmanCodec HuffmanCodec = new HuffmanCodec(HuffmanCodec.SkulltagCompatibleHuffmanTree);
+        private static readonly HuffmanCodec
+            HuffmanCodec = new HuffmanCodec(HuffmanCodec.SkulltagCompatibleHuffmanTree);
 
         public IEnumerable<IPEndPoint> FetchServerList(IEnumerable<(string host, int port)> masterServers) {
             var serverList = new List<IPEndPoint>();
@@ -41,8 +42,7 @@ namespace ZandronumServersDataCollector {
             }
         }
 
-        private static void ConnectAndSendQuery((string host, int port) masterServer, UdpClient udpClient)
-        {
+        private static void ConnectAndSendQuery((string host, int port) masterServer, UdpClient udpClient) {
             udpClient.Connect(masterServer.host, masterServer.port);
             var query = ConstructLauncherQuery();
 
@@ -59,8 +59,7 @@ namespace ZandronumServersDataCollector {
             return HuffmanCodec.Encode(message.ToArray());
         }
 
-        private static List<byte> ReceivePlainData(UdpClient udpClient)
-        {
+        private static List<byte> ReceivePlainData(UdpClient udpClient) {
             var recievedData = new List<byte>();
 
             do {
@@ -102,8 +101,7 @@ namespace ZandronumServersDataCollector {
             }
         }
 
-        private static IEnumerable<IPEndPoint> ReadServers(BinaryReader serverResponse)
-        {
+        private static IEnumerable<IPEndPoint> ReadServers(BinaryReader serverResponse) {
             // we read 1 byte so we need to seek 1 byte backward
             serverResponse.BaseStream.Seek(-1, SeekOrigin.Current);
 
@@ -115,8 +113,7 @@ namespace ZandronumServersDataCollector {
             }
         }
 
-        private static ResponseReadStates FindOutIsItEndOfServerList(BinaryReader serverResponse)
-        {
+        private static ResponseReadStates FindOutIsItEndOfServerList(BinaryReader serverResponse) {
             var responseCommand = (MasterResponseCommands) serverResponse.ReadByte();
 
             switch (responseCommand) {
@@ -129,8 +126,7 @@ namespace ZandronumServersDataCollector {
             }
         }
 
-        private static void WaitForNextServerListPart(BinaryReader serverResponse)
-        {
+        private static void WaitForNextServerListPart(BinaryReader serverResponse) {
             // check for unencoded data
             if (serverResponse.ReadByte() != 0xFF) {
                 serverResponse.BaseStream.Seek(-1, SeekOrigin.Current);
@@ -141,7 +137,7 @@ namespace ZandronumServersDataCollector {
             }
 
             // read unused packet number
-            serverResponse.ReadByte(); 
+            serverResponse.ReadByte();
 
             if (serverResponse.ReadByte() != (int) MasterResponseCommands.ServerBlock) {
                 throw new ServerListFetcherException("Incorrect response");

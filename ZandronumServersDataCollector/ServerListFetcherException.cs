@@ -1,7 +1,6 @@
 ﻿using System;
 
-namespace ZandronumServersDataCollector
-{
+namespace ZandronumServersDataCollector {
     public class ServerListFetcherException : Exception {
         public ServerListFetcherException(string message) : base(message) {
         }
