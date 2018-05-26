@@ -13,17 +13,26 @@ namespace ZandronumServersDataCollector.ServerDataFetchers {
             new HuffmanCodec(HuffmanCodec.SkulltagCompatibleHuffmanTree);
 
         public void FetchServerData(IEnumerable<IPEndPoint> servers, List<ServerData> serverDatasCollection) {
+            var tasks = new List<Task>();
+
             foreach (var address in servers) {
-                FetchServerData(address, serverDatasCollection);
+                var task = FetchServerData(address, serverDatasCollection);
+                tasks.Add(task);
+            }
+
+            foreach (var task in tasks) {
+                task.Wait();
             }
         }
 
         public async Task FetchServerData(IPEndPoint server, List<ServerData> serverDatasCollection) {
+            Console.WriteLine(server);
+
             using (var udpClient = new UdpClient()) {
                 await ConnectAndSendQuery(server, udpClient);
-                var data = RecievePlainData(udpClient);
+                var data = await RecievePlainData(udpClient);
 
-                await ReadResponse(data.Result, server, serverDatasCollection);
+                await ReadResponse(data, server, serverDatasCollection);
             }
         }
 
@@ -46,12 +55,8 @@ namespace ZandronumServersDataCollector.ServerDataFetchers {
         }
 
         private static async Task<byte[]> RecievePlainData(UdpClient udpClient) {
-            var recieveBuffer = new List<byte>();
-
             var data = await udpClient.ReceiveAsync();
-            recieveBuffer.AddRange(data.Buffer);
-
-            return HuffmanCodec.Decode(recieveBuffer.ToArray());
+            return HuffmanCodec.Decode(data.Buffer);
         }
 
         private static Task ReadResponse(byte[] data, IPEndPoint server, List<ServerData> serverDatasCollection) {
@@ -84,6 +89,7 @@ namespace ZandronumServersDataCollector.ServerDataFetchers {
                 serverData.Name = response.ReadNullTerminatedString();
             }
 
+            serverDatasCollection.Add(serverData);
             return Task.CompletedTask;
         }
     }

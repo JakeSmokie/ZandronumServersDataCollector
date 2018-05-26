@@ -12,7 +12,7 @@ namespace ZandronumServersDataCollector {
             var serverList = serverListFetcher.FetchServerList(("master.zandronum.com", 15300)).ToList();
             var servers = new List<ServerData>();
 
-            serverDataFetcher.FetchServerData(serverList, servers);
+            serverDataFetcher.FetchServerData(serverList.Take(1).ToList(), servers);
         }
     }
 }
