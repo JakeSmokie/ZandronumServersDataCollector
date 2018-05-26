@@ -1,4 +1,5 @@
 ﻿using System.Linq;
+using ZandronumServersDataCollector.ServerListFetchers;
 
 namespace ZandronumServersDataCollector {
     internal class Program {

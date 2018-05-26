@@ -6,14 +6,8 @@ using System.Net;
 using System.Net.Sockets;
 using EncodeLibrary.Huffman;
 
-namespace ZandronumServersDataCollector {
-    public class ServerListFetcher {
-        private enum ResponseReadStates {
-            WaitForNextServerListPart,
-            ReadServerBlock,
-            End
-        }
-
+namespace ZandronumServersDataCollector.ServerListFetchers {
+    public partial class ServerListFetcher : IServerListFetcher {
         private static readonly HuffmanCodec
             HuffmanCodec = new HuffmanCodec(HuffmanCodec.SkulltagCompatibleHuffmanTree);
 
