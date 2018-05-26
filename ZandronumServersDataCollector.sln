@@ -3,7 +3,9 @@ Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio 15
 VisualStudioVersion = 15.0.27130.2036
 MinimumVisualStudioVersion = 10.0.40219.1
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ZandronumServersDataCollector", "ZandronumServersDataCollector\ZandronumServersDataCollector.csproj", "{2D834F85-A9F9-45AF-8D19-D5EBF0889014}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "ZandronumServersDataCollector", "ZandronumServersDataCollector\ZandronumServersDataCollector.csproj", "{2D834F85-A9F9-45AF-8D19-D5EBF0889014}"
+EndProject
+Project("{888888A0-9F3D-457C-B088-3A5042F75D52}") = "PythonHuffmanTest", "PythonHuffmanTest\PythonHuffmanTest.pyproj", "{A3A1A658-6D52-4B62-83E3-672163D3D63E}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -15,6 +17,8 @@ Global
 		{2D834F85-A9F9-45AF-8D19-D5EBF0889014}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{2D834F85-A9F9-45AF-8D19-D5EBF0889014}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{2D834F85-A9F9-45AF-8D19-D5EBF0889014}.Release|Any CPU.Build.0 = Release|Any CPU
+		{A3A1A658-6D52-4B62-83E3-672163D3D63E}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{A3A1A658-6D52-4B62-83E3-672163D3D63E}.Release|Any CPU.ActiveCfg = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

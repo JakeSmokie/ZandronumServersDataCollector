@@ -67,6 +67,14 @@ namespace ZandronumServersDataCollector.ServerListFetchers {
         }
 
         private static IEnumerable<IPEndPoint> ReadResponse(BinaryReader serverResponse) {
+            var response = (MasterResponseCommands) serverResponse.ReadInt32();
+
+            if (response == MasterResponseCommands.IpIsBanned ||
+                response == MasterResponseCommands.RequestIgnored) {
+                yield break;;
+            }
+
+            serverResponse.BaseStream.Seek(-4, SeekOrigin.Current);
             var state = ResponseReadStates.WaitForNextServerListPart;
 
             while (state != ResponseReadStates.End) {
