@@ -1,4 +1,5 @@
-﻿using System.Linq;
+﻿using System.Collections.Generic;
+using System.Linq;
 using ZandronumServersDataCollector.ServerDataFetchers;
 using ZandronumServersDataCollector.ServerListFetchers;
 
@@ -8,8 +9,10 @@ namespace ZandronumServersDataCollector {
             var serverListFetcher = new ServerListFetcher();
             var serverDataFetcher = new ServerDataFetcher();
 
-            var servers = serverListFetcher.FetchServerList(("master.zandronum.com", 15300)).ToList();
-            var serverData = serverDataFetcher.FetchServerData(servers).ToList();
+            var serverList = serverListFetcher.FetchServerList(("master.zandronum.com", 15300)).ToList();
+            var servers = new List<ServerData>();
+
+            serverDataFetcher.FetchServerData(serverList, servers);
         }
     }
 }

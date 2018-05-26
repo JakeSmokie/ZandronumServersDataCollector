@@ -8,6 +8,9 @@ EndProject
 Project("{888888A0-9F3D-457C-B088-3A5042F75D52}") = "PythonHuffmanTest", "PythonHuffmanTest\PythonHuffmanTest.pyproj", "{A3A1A658-6D52-4B62-83E3-672163D3D63E}"
 EndProject
 Global
+	GlobalSection(Performance) = preSolution
+		HasPerformanceSessions = true
+	EndGlobalSection
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
 		Release|Any CPU = Release|Any CPU

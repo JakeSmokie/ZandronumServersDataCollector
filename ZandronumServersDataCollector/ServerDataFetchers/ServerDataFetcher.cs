@@ -1,31 +1,60 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.IO;
-using System.Linq;
 using System.Net;
 using System.Net.Sockets;
+using System.Threading.Tasks;
 using EncodeLibrary.Huffman;
 using ZandronumServersDataCollector.BinaryReaderExtensions;
 
 namespace ZandronumServersDataCollector.ServerDataFetchers {
-    public partial class ServerDataFetcher : IServerDataFetcher {
+    public partial class ServerDataFetcher {
         private static readonly HuffmanCodec HuffmanCodec =
             new HuffmanCodec(HuffmanCodec.SkulltagCompatibleHuffmanTree);
 
-        public IEnumerable<ServerData> FetchServerData(IEnumerable<IPEndPoint> servers) {
-            return servers.Select(FetchServerData);
-        }
-
-        public ServerData FetchServerData(IPEndPoint server) {
-            using (var udpClient = new UdpClient()) {
-                ConnectAndSendQuery(server, udpClient);
-                var data = RecievePlainData(udpClient);
-
-                return ReadResponse(data, server);
+        public void FetchServerData(IEnumerable<IPEndPoint> servers, List<ServerData> serverDatasCollection) {
+            foreach (var address in servers) {
+                FetchServerData(address, serverDatasCollection);
             }
         }
 
-        private static ServerData ReadResponse(byte[] data, IPEndPoint server) {
+        public async Task FetchServerData(IPEndPoint server, List<ServerData> serverDatasCollection) {
+            using (var udpClient = new UdpClient()) {
+                await ConnectAndSendQuery(server, udpClient);
+                var data = RecievePlainData(udpClient);
+
+                await ReadResponse(data.Result, server, serverDatasCollection);
+            }
+        }
+
+        private static async Task ConnectAndSendQuery(IPEndPoint server, UdpClient udpClient) {
+            var query = ConstructServerQuery();
+            udpClient.Connect(server);
+
+            await udpClient.SendAsync(query, query.Length);
+        }
+
+        private static byte[] ConstructServerQuery() {
+            var query = new List<byte>();
+
+            // send server launcher challenge
+            query.AddRange(BitConverter.GetBytes(199));
+            query.AddRange(BitConverter.GetBytes((int) ZandronumQueryFlags.Name));
+            query.AddRange(BitConverter.GetBytes((int) DateTime.Now.TimeOfDay.TotalMilliseconds));
+
+            return HuffmanCodec.Encode(query.ToArray());
+        }
+
+        private static async Task<byte[]> RecievePlainData(UdpClient udpClient) {
+            var recieveBuffer = new List<byte>();
+
+            var data = await udpClient.ReceiveAsync();
+            recieveBuffer.AddRange(data.Buffer);
+
+            return HuffmanCodec.Decode(recieveBuffer.ToArray());
+        }
+
+        private static Task ReadResponse(byte[] data, IPEndPoint server, List<ServerData> serverDatasCollection) {
             var response = new BinaryReader(new MemoryStream(data));
             var responseType = (ResponseTypes) response.ReadInt32();
 
@@ -33,10 +62,11 @@ namespace ZandronumServersDataCollector.ServerDataFetchers {
                 case ResponseTypes.Good:
                     break;
                 case ResponseTypes.Wait:
-                    return null;
+                    return Task.CompletedTask;
                 case ResponseTypes.Banned:
-                    return null;
+                    return Task.CompletedTask;
                 default:
+                    return Task.CompletedTask;
                     throw new ArgumentOutOfRangeException();
             }
 
@@ -54,37 +84,7 @@ namespace ZandronumServersDataCollector.ServerDataFetchers {
                 serverData.Name = response.ReadNullTerminatedString();
             }
 
-            return serverData;
-        }
-
-        private static byte[] RecievePlainData(UdpClient udpClient) {
-            var recieveBuffer = new List<byte>();
-
-            do {
-                IPEndPoint ip = null;
-                recieveBuffer.AddRange(udpClient.Receive(ref ip));
-            } while (udpClient.Available != 0);
-
-            return HuffmanCodec.Decode(recieveBuffer.ToArray());
-        }
-
-        private static void ConnectAndSendQuery(IPEndPoint server, UdpClient udpClient) {
-            var query = ConstructServerQuery();
-            udpClient.Connect(server);
-
-            var sendTask = udpClient.SendAsync(query, query.Length);
-            sendTask.Wait();
-        }
-
-        private static byte[] ConstructServerQuery() {
-            var query = new List<byte>();
-
-            // send server launcher challenge
-            query.AddRange(BitConverter.GetBytes(199));
-            query.AddRange(BitConverter.GetBytes((int) ZandronumQueryFlags.Name));
-            query.AddRange(BitConverter.GetBytes((int) DateTime.Now.TimeOfDay.TotalMilliseconds));
-
-            return HuffmanCodec.Encode(query.ToArray());
+            return Task.CompletedTask;
         }
     }
 }
