@@ -33,13 +33,7 @@
             Deh = 0x40000000,
 
             Standardquery =
-                Name | Url | Email | Mapname | Maxclients |
-                Maxplayers | Pwads | Gametype | Iwad |
-                Forcepassword | Forcejoinpassword | Limits |
-                Numplayers | Playerdata | TeaminfoNumber |
-                TeaminfoName | TeaminfoScore | Gameskill |
-                TestingServer | AllDmflags | SecuritySettings |
-                OptionalWads | Deh
+                Name | Pwads
         };
     }
 }

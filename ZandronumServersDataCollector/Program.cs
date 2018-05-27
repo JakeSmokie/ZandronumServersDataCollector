@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Linq;
 using System.Net;
 using ZandronumServersDataCollector.ServerDataFetchers;
@@ -11,10 +12,15 @@ namespace ZandronumServersDataCollector {
             var serverListFetcher = new ServerListFetcher();
             var serverDataFetcher = new ServerDataFetcher();
 
-            var serverAddresses = serverListFetcher.FetchServerList(("master.zandronum.com", 15300)).ToList();
+            var serverAddresses = serverListFetcher.FetchServerList(("master.zandronum.com", 15300));
             var servers = new List<ServerData>();
 
-            serverDataFetcher.FetchServerData(serverAddresses, servers);
+            Console.WriteLine($"Got servers list. {serverAddresses?.Count() ?? 0} total");
+
+            var task = serverDataFetcher.FetchServerData(serverAddresses, servers);
+            task.Wait();
+
+            Console.WriteLine("Got servers data.");
 
             while (true) {
                 Console.ReadLine();

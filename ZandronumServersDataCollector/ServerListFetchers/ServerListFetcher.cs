@@ -4,11 +4,12 @@ using System.IO;
 using System.Linq;
 using System.Net;
 using System.Net.Sockets;
+using System.Threading.Tasks;
 using EncodeLibrary.Huffman;
 using ZandronumServersDataCollector.Extensions;
 
 namespace ZandronumServersDataCollector.ServerListFetchers {
-    public partial class ServerListFetcher : IServerListFetcher {
+    public partial class ServerListFetcher {
         /// <summary>
         /// Timeout in milliseconds
         /// </summary>
@@ -31,7 +32,11 @@ namespace ZandronumServersDataCollector.ServerListFetchers {
         public IEnumerable<IPEndPoint> FetchServerList((string host, int port) masterServer) {
             using (var udpClient = new UdpClient()) {
                 ConnectAndSendQuery(masterServer, udpClient);
-                var recievedData = ReceivePlainData(udpClient);
+
+                var receiveTask = ReceivePlainData(udpClient);
+                receiveTask.Wait();
+
+                var recievedData = receiveTask.Result;
 
                 if (recievedData == null)
                     return new List<IPEndPoint>();
@@ -42,7 +47,7 @@ namespace ZandronumServersDataCollector.ServerListFetchers {
                         ? recievedData.Skip(1).ToArray()
                         : HuffmanCodec.Decode(recievedData.ToArray());
 
-                return ReadResponse(new BinaryReader(new MemoryStream(serverResponse)));
+                return ReadResponse(new BinaryReader(new MemoryStream(serverResponse))).ToArray();
             }
         }
 
@@ -63,11 +68,11 @@ namespace ZandronumServersDataCollector.ServerListFetchers {
             return HuffmanCodec.Encode(message.ToArray());
         }
 
-        private static List<byte> ReceivePlainData(UdpClient udpClient) {
+        private static async Task<byte[]> ReceivePlainData(UdpClient udpClient) {
             var recievedData = new List<byte>();
 
             do {
-                var data = udpClient.ReceiveWithTimeoutAndAmountOfAttempts(Timeout, AttemptsAmount);
+                var data = await udpClient.ReceiveWithTimeoutAndAmountOfAttempts(Timeout, AttemptsAmount);
 
                 if (data == null)
                     return null;
@@ -75,7 +80,7 @@ namespace ZandronumServersDataCollector.ServerListFetchers {
                 recievedData.AddRange(data);
             } while (udpClient.Available != 0);
 
-            return recievedData;
+            return recievedData.ToArray();
         }
 
         private static IEnumerable<IPEndPoint> ReadResponse(BinaryReader serverResponse) {
