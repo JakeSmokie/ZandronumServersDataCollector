@@ -13,6 +13,7 @@ namespace ZandronumServersDataCollector.ServerListFetchers {
         /// Timeout in milliseconds
         /// </summary>
         private const int Timeout = 2000;
+        private const int AttemptsAmount = 5;
 
         private static readonly HuffmanCodec
             HuffmanCodec = new HuffmanCodec(HuffmanCodec.SkulltagCompatibleHuffmanTree);
@@ -66,8 +67,10 @@ namespace ZandronumServersDataCollector.ServerListFetchers {
             var recievedData = new List<byte>();
 
             do {
-                IPEndPoint ip = null;
-                var data = udpClient.Receive(ref ip);
+                var data = udpClient.ReceiveWithTimeoutAndAmountOfAttempts(Timeout, AttemptsAmount);
+
+                if (data == null)
+                    return null;
 
                 recievedData.AddRange(data);
             } while (udpClient.Available != 0);
@@ -81,7 +84,6 @@ namespace ZandronumServersDataCollector.ServerListFetchers {
             if (response == MasterResponseCommands.IpIsBanned ||
                 response == MasterResponseCommands.RequestIgnored) {
                 yield break;
-                ;
             }
 
             serverResponse.BaseStream.Seek(-4, SeekOrigin.Current);

@@ -3,14 +3,24 @@ using System.Threading.Tasks;
 
 namespace ZandronumServersDataCollector.Extensions {
     public static class UdpClientExtension {
-        public static async Task<byte[]> ReceiveDataWithTimeout(this UdpClient udpClient, int timeout) {
+        public static byte[] ReceiveWithTimeout(this UdpClient udpClient, int timeout) {
             var receiveTask = udpClient.ReceiveAsync();
-            await Task.Delay(timeout);
+            receiveTask.Wait(timeout);
 
-            if (receiveTask.Status == TaskStatus.WaitingForActivation)
-                return null;
+            return receiveTask.Status == TaskStatus.WaitingForActivation ? null : receiveTask.Result.Buffer;
+        }
 
-            return receiveTask.Result.Buffer;
+        public static byte[] ReceiveWithTimeoutAndAmountOfAttempts(this UdpClient udpClient, int timeout, int attemptsAmount) {
+            byte[] data = null;
+
+            for (var i = 0; i < attemptsAmount; i++) {
+                data = udpClient.ReceiveWithTimeout(timeout);
+
+                if (data != null)
+                    break;
+            }
+
+            return data;
         }
     }
 }

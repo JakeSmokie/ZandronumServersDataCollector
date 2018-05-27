@@ -10,32 +10,34 @@ using ZandronumServersDataCollector.Extensions;
 namespace ZandronumServersDataCollector.ServerDataFetchers {
     public partial class ServerDataFetcher {
         /// <summary>
-        /// Timeout in milliseconds
+        /// Timeout for connection to server in milliseconds
         /// </summary>
-        private const int Timeout = 1000;
+        private const int Timeout = 20000;
+
+        /// <summary>
+        /// Amount of server connection attempts
+        /// </summary>
+        private const int ServerConnectionAttemptsAmount = 6;
 
         private static readonly HuffmanCodec HuffmanCodec =
             new HuffmanCodec(HuffmanCodec.SkulltagCompatibleHuffmanTree);
 
-        public void FetchServerData(IEnumerable<IPEndPoint> servers, List<ServerData> serverDatasCollection) {
-            var tasks = new List<Task>();
+        public async void FetchServerData(IEnumerable<IPEndPoint> servers, List<ServerData> serverDatasCollection) {
+            await Task.Delay(1);
 
             foreach (var address in servers) {
-                var task = FetchServerData(address, serverDatasCollection);
-                tasks.Add(task);
-            }
-
-            foreach (var task in tasks) {
-                task.Wait();
+                FetchServerData(address, serverDatasCollection);
+                await Task.Delay(10);
             }
         }
 
         public async Task FetchServerData(IPEndPoint server, List<ServerData> serverDatasCollection) {
+            await Task.Delay(1);
             Console.WriteLine(server);
 
             using (var udpClient = new UdpClient()) {
                 await ConnectAndSendQuery(server, udpClient);
-                var data = await RecievePlainData(udpClient);
+                var data = RecievePlainData(udpClient);
 
                 if (data == null)
                     return;
@@ -62,20 +64,16 @@ namespace ZandronumServersDataCollector.ServerDataFetchers {
             return HuffmanCodec.Encode(query.ToArray());
         }
 
-        private static async Task<byte[]> RecievePlainData(UdpClient udpClient) {
-            var data = await udpClient.ReceiveDataWithTimeout(Timeout);
-
-            if (data == null)
-                return null;
-
-            return HuffmanCodec.Decode(data);
+        private static byte[] RecievePlainData(UdpClient udpClient) {
+            var data = udpClient.ReceiveWithTimeoutAndAmountOfAttempts(Timeout, ServerConnectionAttemptsAmount);
+            return data == null ? null : HuffmanCodec.Decode(data);
         }
 
         private static Task ReadResponse(byte[] data, IPEndPoint server, List<ServerData> serverDatasCollection) {
             var response = new BinaryReader(new MemoryStream(data));
             var responseType = (ResponseTypes) response.ReadInt32();
 
-            if (responseType != ResponseTypes.Good) 
+            if (responseType != ResponseTypes.Good)
                 return Task.CompletedTask;
 
             var responseTimestamp = response.ReadUInt32();
