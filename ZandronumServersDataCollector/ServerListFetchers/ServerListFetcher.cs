@@ -14,6 +14,7 @@ namespace ZandronumServersDataCollector.ServerListFetchers {
         /// Timeout in milliseconds
         /// </summary>
         private const int Timeout = 2000;
+
         private const int AttemptsAmount = 5;
 
         private static readonly HuffmanCodec
@@ -30,13 +31,9 @@ namespace ZandronumServersDataCollector.ServerListFetchers {
         }
 
         public IEnumerable<IPEndPoint> FetchServerList((string host, int port) masterServer) {
-            using (var udpClient = new UdpClient()) {
-                ConnectAndSendQuery(masterServer, udpClient);
-
-                var receiveTask = ReceivePlainData(udpClient);
-                receiveTask.Wait();
-
-                var recievedData = receiveTask.Result;
+            using (var socket = new Socket(SocketType.Dgram, ProtocolType.Udp)) {
+                ConnectAndSendQuery(masterServer, socket);
+                var recievedData = ReceivePlainData(socket);
 
                 if (recievedData == null)
                     return new List<IPEndPoint>();
@@ -51,12 +48,11 @@ namespace ZandronumServersDataCollector.ServerListFetchers {
             }
         }
 
-        private static void ConnectAndSendQuery((string host, int port) masterServer, UdpClient udpClient) {
-            udpClient.Connect(masterServer.host, masterServer.port);
+        private static void ConnectAndSendQuery((string host, int port) masterServer, Socket socket) {
+            socket.Connect(masterServer.host, masterServer.port);
             var query = ConstructLauncherQuery();
 
-            var sendTask = udpClient.SendAsync(query, query.Length);
-            sendTask.Wait();
+            socket.Send(query, SocketFlags.None);
         }
 
         private static byte[] ConstructLauncherQuery() {
@@ -68,17 +64,14 @@ namespace ZandronumServersDataCollector.ServerListFetchers {
             return HuffmanCodec.Encode(message.ToArray());
         }
 
-        private static async Task<byte[]> ReceivePlainData(UdpClient udpClient) {
+        private static byte[] ReceivePlainData(Socket socket) {
             var recievedData = new List<byte>();
+            var buffer = new byte[4096];
 
             do {
-                var data = await udpClient.ReceiveWithTimeoutAndAmountOfAttempts(Timeout, AttemptsAmount);
-
-                if (data == null)
-                    return null;
-
-                recievedData.AddRange(data);
-            } while (udpClient.Available != 0);
+                var recievedAmount = socket.Receive(buffer);
+                recievedData.AddRange(buffer.Take(recievedAmount));
+            } while (socket.Available > 0);
 
             return recievedData.ToArray();
         }

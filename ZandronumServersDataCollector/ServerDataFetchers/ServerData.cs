@@ -1,10 +1,12 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 using System.Net;
 
 namespace ZandronumServersDataCollector.ServerDataFetchers {
     public class ServerData {
+        public DateTime LogTime;
         public IPEndPoint Address;
-        public uint Ping;
+        public short Ping;
         public string Version;
         public string Name;
         public List<string> PWads;
