@@ -37,7 +37,7 @@ namespace ZandronumServersDataCollector.ServerDataFetchers {
             });
 
             foreach (var task in tasks) {
-                task.Wait();
+                task?.Wait();
             }
         }
 

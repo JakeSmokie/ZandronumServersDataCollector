@@ -30,7 +30,6 @@ namespace ZandronumServersDataCollector {
                 }
 
                 GC.Collect();
-                Thread.Sleep(10000);
             }
         }
     }
