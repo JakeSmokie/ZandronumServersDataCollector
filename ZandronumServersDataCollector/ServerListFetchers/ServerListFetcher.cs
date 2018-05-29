@@ -103,13 +103,11 @@ namespace ZandronumServersDataCollector.ServerListFetchers {
 
         private static BinaryReader GetNextServerListPart(Socket socket) {
             var buffer = new byte[2048];
-            var receivedAmount = 0;
-
             BinaryReader serverResponse;
 
             while (true) {
                 try {
-                    receivedAmount = socket.Receive(buffer);
+                    var receivedAmount = socket.Receive(buffer);
                     buffer = buffer.Take(receivedAmount).ToArray();
                 }
                 catch (SocketException) {
