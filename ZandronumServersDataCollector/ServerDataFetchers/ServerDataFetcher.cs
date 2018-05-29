@@ -1,10 +1,12 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Diagnostics;
+using System.Globalization;
 using System.IO;
 using System.Linq;
 using System.Net;
 using System.Net.Sockets;
+using System.Threading;
 using System.Threading.Tasks;
 using EncodeLibrary.Huffman;
 using ZandronumServersDataCollector.Extensions;
@@ -19,95 +21,115 @@ namespace ZandronumServersDataCollector.ServerDataFetchers {
         /// <summary>
         /// Amount of server connection attempts
         /// </summary>
-        private const int ServerConnectionAttemptsAmount = 5;
+        private const int ServerConnectionAttemptsAmount = 3;
+
+        private const int MaximumTaskAmount = 16;
 
         private static readonly HuffmanCodec HuffmanCodec =
             new HuffmanCodec(HuffmanCodec.SkulltagCompatibleHuffmanTree);
 
-        private static readonly object LockObject = new object();
-
         private int _lastUsedPort = 40000;
 
+        private static readonly Semaphore Semaphore = new Semaphore(MaximumTaskAmount, MaximumTaskAmount);
+        private readonly object _lockObject = new object();
+
         public void FetchServerData(IEnumerable<IPEndPoint> servers, List<ServerData> serverDatasCollection) {
-            var tasks = new List<Task>();
+            var threads = new List<Thread>();
 
-            Parallel.ForEach(servers, s => {
-                var task = FetchServerData(s, serverDatasCollection);
-                tasks.Add(task);
-            });
+            foreach (var server in servers) {
+                var t = new Thread(() => { FetchServerData(server, serverDatasCollection); });
+                threads.Add(t);
+            }
 
-            foreach (var task in tasks) {
-                task?.Wait();
+            foreach (var t in threads) {
+                t.Start();
+            }
+
+            foreach (var t in threads) {
+                t.Join();
             }
         }
 
-        public async Task FetchServerData(IPEndPoint server, List<ServerData> serverDatasCollection) {
-            await Task.Delay(1);
+        public void FetchServerData(IPEndPoint server, List<ServerData> serverDatasCollection) {
             byte[] data;
 
             using (var socket = new Socket(SocketType.Dgram, ProtocolType.Udp) {
-                ReceiveTimeout = 1000
+                ReceiveTimeout = Timeout
             }) {
-                lock (LockObject) {
-                    socket.Bind(new IPEndPoint(IPAddress.Any, _lastUsedPort++)); 
+                lock (_lockObject) {
+                    socket.Bind(new IPEndPoint(IPAddress.Any, _lastUsedPort++));
                 }
 
-                await ConnectAndSendQuery(server, socket);
-                data = RecievePlainData(socket);
+                data = RecievePlainData(server, socket);
 
                 if (data == null) {
                     return;
                 }
             }
 
-            await ReadResponse(data, server, serverDatasCollection);
+            ReadResponse(data, server, serverDatasCollection);
         }
 
-        private static async Task ConnectAndSendQuery(IPEndPoint server, Socket socket) {
+        private static void ConnectAndSendQuery(IPEndPoint server, Socket socket) {
             socket.Connect(server);
-
-            var query = ConstructServerQuery();
-            await socket.SendAsync(new ArraySegment<byte>(query), SocketFlags.None);
+            socket.Send(ConstructServerQuery());
         }
 
         private static byte[] ConstructServerQuery() {
-            var query = new List<byte>();
+            // not so beauty, but fast
+            var query = new byte[12];
+            query[0] = 199;
 
-            // send server launcher challenge
-            query.AddRange(BitConverter.GetBytes(199));
-            query.AddRange(BitConverter.GetBytes((int) ZandronumQueryFlags.Standardquery));
-            query.AddRange(BitConverter.GetBytes((int) DateTime.Now.TimeOfDay.TotalMilliseconds));
+            var flags = BitConverter.GetBytes((int) ZandronumQueryFlags.Standardquery);
 
-            return HuffmanCodec.Encode(query.ToArray());
+            for (var index = 0; index < flags.Length; index++) {
+                query[4 + index] = flags[index];
+            }
+
+            var time = BitConverter.GetBytes((int) DateTime.Now.TimeOfDay.TotalMilliseconds);
+
+            for (var index = 0; index < time.Length; index++) {
+                query[8 + index] = time[index];
+            }
+
+            return HuffmanCodec.Encode(query);
         }
 
-        private static byte[] RecievePlainData(Socket socket) {
-            var recievedData = new List<byte>();
+        private static byte[] RecievePlainData(IPEndPoint server, Socket socket) {
             var buffer = new byte[4096];
+            var recievedAmount = 0;
 
-            try {
-                do {
-                    var recievedAmount = socket.Receive(buffer);
-                    recievedData.AddRange(buffer.Take(recievedAmount));
-                } while (socket.Available > 0);
+            for (var i = 0; i < ServerConnectionAttemptsAmount; i++) {
+                ConnectAndSendQuery(server, socket);
+
+                try {
+                    recievedAmount = socket.Receive(buffer);
+                }
+                catch (SocketException) {
+                    continue;
+                }
+
+                break;
             }
-            catch (SocketException e) {
-                Debug.WriteLine(e.Message);
+
+            if (recievedAmount == 0) {
+                //Console.WriteLine($"Can't connect to server {socket.RemoteEndPoint as IPEndPoint}");
                 return null;
             }
+
+            var recievedData = buffer.Take(recievedAmount).ToArray();
 
             return recievedData[0] == 0xFF
                 ? recievedData.Skip(1).ToArray()
                 : HuffmanCodec.Decode(recievedData.ToArray());
         }
 
-        private static Task ReadResponse(byte[] data, IPEndPoint server,
+        private static void ReadResponse(byte[] data, IPEndPoint server,
             ICollection<ServerData> serverDatasCollection) {
             var response = new BinaryReader(new MemoryStream(data));
             var responseType = (ResponseTypes) response.ReadInt32();
 
-            if (responseType != ResponseTypes.Good)
-                return Task.CompletedTask;
+            if (responseType != ResponseTypes.Good) return;
 
             var responseTimestamp = response.ReadUInt32();
             var serverData =
@@ -134,8 +156,6 @@ namespace ZandronumServersDataCollector.ServerDataFetchers {
 
             serverData.LogTime = DateTime.Now;
             serverDatasCollection.Add(serverData);
-
-            return Task.CompletedTask;
         }
     }
 }

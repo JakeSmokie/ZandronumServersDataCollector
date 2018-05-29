@@ -32,11 +32,19 @@ namespace ZandronumServersDataCollector.ServerListFetchers {
         }
 
         public IEnumerable<IPEndPoint> FetchServerList((string host, int port) masterServer) {
-            using (var socket = new Socket(SocketType.Dgram, ProtocolType.Udp) {
-                ReceiveTimeout = 1000
-            }) {
-                ConnectAndSendQuery(masterServer, socket);
-                return ReadResponse(socket).ToArray();
+            while (true) {
+                using (var socket = new Socket(SocketType.Dgram, ProtocolType.Udp) {
+                    ReceiveTimeout = 1000
+                }) {
+                    ConnectAndSendQuery(masterServer, socket);
+                    var response = ReadResponse(socket).ToArray();
+
+                    if (response.Length == 0) {
+                        continue;
+                    }
+
+                    return response;
+                }
             }
         }
 
@@ -58,17 +66,21 @@ namespace ZandronumServersDataCollector.ServerListFetchers {
 
         private static IEnumerable<IPEndPoint> ReadResponse(Socket socket) {
             BinaryReader serverResponse = null;
-            var state = ResponseReadStates.WaitForNextServerListPart;
+            var state = ResponseReadStates.GetNextServerListPart;
 
             while (state != ResponseReadStates.End) {
                 switch (state) {
                     case ResponseReadStates.WaitForNextServerListPart:
-                        if (!socket.Connected)
+                        state = ResponseReadStates.GetNextServerListPart;
+                        break;
+                    case ResponseReadStates.GetNextServerListPart:
+                        serverResponse = GetNextServerListPart(socket);
+
+                        if (serverResponse == null) {
                             yield break;
+                        }
 
-                        serverResponse = WaitForNextServerListPart(socket);
                         state = ResponseReadStates.ReadServerBlock;
-
                         break;
                     case ResponseReadStates.ReadServerBlock:
                         // is server block terminated
@@ -89,15 +101,49 @@ namespace ZandronumServersDataCollector.ServerListFetchers {
             }
         }
 
-        private static BinaryReader WaitForNextServerListPart(Socket socket) {
-            var buffer = new byte[1024];
-            socket.Receive(buffer);
+        private static BinaryReader GetNextServerListPart(Socket socket) {
+            var buffer = new byte[2048];
+            var receivedAmount = 0;
 
-            var serverResponse = new BinaryReader(new MemoryStream(buffer));
+            BinaryReader serverResponse;
 
-            // check for unencoded data
-            if (serverResponse.ReadByte() != 0xFF) {
-                serverResponse.BaseStream.Seek(-1, SeekOrigin.Current);
+            while (true) {
+                try {
+                    receivedAmount = socket.Receive(buffer);
+                    buffer = buffer.Take(receivedAmount).ToArray();
+                }
+                catch (SocketException) {
+                    Console.WriteLine("Can't connect to server. Trying again...");
+                    Thread.Sleep(3000);
+                    return null;
+                }
+
+                if (BitConverter.ToInt32(buffer, 0) == (int) MasterResponseCommands.RequestIgnored) {
+                    Console.WriteLine("Master server is called to often. Sleep for 3 seconds.");
+                    Thread.Sleep(3000);
+
+                    continue;
+                }
+
+                if (buffer[0] != 0xFF) {
+                    buffer = HuffmanCodec.Decode(buffer);
+                }
+
+                serverResponse = new BinaryReader(new MemoryStream(buffer));
+
+                // check for unencoded data
+                if (serverResponse.ReadByte() != 0xFF) {
+                    serverResponse.BaseStream.Seek(-1, SeekOrigin.Current);
+                }
+
+                if (BitConverter.ToInt32(buffer, 0) == (int) MasterResponseCommands.RequestIgnored) {
+                    Console.WriteLine("Master server is called to often. Sleep for 3 seconds.");
+                    Thread.Sleep(3000);
+
+                    continue;
+                }
+
+                break;
             }
 
             if (serverResponse.ReadInt32() != (int) MasterResponseCommands.BeginServerListPart) {

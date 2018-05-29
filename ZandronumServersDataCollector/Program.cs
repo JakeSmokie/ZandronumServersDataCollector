@@ -4,6 +4,7 @@ using System.Diagnostics;
 using System.Linq;
 using System.Net;
 using System.Threading;
+using System.Threading.Tasks;
 using ZandronumServersDataCollector.DBDrivers;
 using ZandronumServersDataCollector.ServerDataFetchers;
 using ZandronumServersDataCollector.ServerListFetchers;

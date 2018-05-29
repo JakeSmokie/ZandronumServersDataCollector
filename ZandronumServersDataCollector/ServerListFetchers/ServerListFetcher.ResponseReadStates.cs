@@ -1,9 +1,10 @@
 ﻿namespace ZandronumServersDataCollector.ServerListFetchers {
     public partial class ServerListFetcher {
         private enum ResponseReadStates {
-            WaitForNextServerListPart,
+            GetNextServerListPart,
             ReadServerBlock,
-            End
+            End,
+            WaitForNextServerListPart
         }
     }
 }
