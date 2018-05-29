@@ -70,6 +70,35 @@ namespace ZandronumServersDataCollector.ServerDataFetchers {
             ReadResponse(data, server, serverDatasCollection);
         }
 
+        private static byte[] RecievePlainData(IPEndPoint server, Socket socket) {
+            var buffer = new byte[4096];
+            var recievedAmount = 0;
+
+            ConnectAndSendQuery(server, socket);
+
+            for (var i = 0; i < ServerConnectionAttemptsAmount; i++) {
+                try {
+                    recievedAmount = socket.Receive(buffer);
+                }
+                catch (SocketException) {
+                    continue;
+                }
+
+                break;
+            }
+
+            if (recievedAmount == 0) {
+                //Console.WriteLine($"Can't connect to server {socket.RemoteEndPoint as IPEndPoint}");
+                return null;
+            }
+
+            var recievedData = buffer.Take(recievedAmount).ToArray();
+
+            return recievedData[0] == 0xFF
+                ? recievedData.Skip(1).ToArray()
+                : HuffmanCodec.Decode(recievedData.ToArray());
+        }
+
         private static void ConnectAndSendQuery(IPEndPoint server, Socket socket) {
             socket.Connect(server);
             socket.Send(ConstructServerQuery());
@@ -93,35 +122,6 @@ namespace ZandronumServersDataCollector.ServerDataFetchers {
             }
 
             return HuffmanCodec.Encode(query);
-        }
-
-        private static byte[] RecievePlainData(IPEndPoint server, Socket socket) {
-            var buffer = new byte[4096];
-            var recievedAmount = 0;
-
-            for (var i = 0; i < ServerConnectionAttemptsAmount; i++) {
-                ConnectAndSendQuery(server, socket);
-
-                try {
-                    recievedAmount = socket.Receive(buffer);
-                }
-                catch (SocketException) {
-                    continue;
-                }
-
-                break;
-            }
-
-            if (recievedAmount == 0) {
-                //Console.WriteLine($"Can't connect to server {socket.RemoteEndPoint as IPEndPoint}");
-                return null;
-            }
-
-            var recievedData = buffer.Take(recievedAmount).ToArray();
-
-            return recievedData[0] == 0xFF
-                ? recievedData.Skip(1).ToArray()
-                : HuffmanCodec.Decode(recievedData.ToArray());
         }
 
         private static void ReadResponse(byte[] data, IPEndPoint server,
