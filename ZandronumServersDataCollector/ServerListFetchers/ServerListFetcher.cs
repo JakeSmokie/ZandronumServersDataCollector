@@ -5,9 +5,7 @@ using System.Linq;
 using System.Net;
 using System.Net.Sockets;
 using System.Threading;
-using System.Threading.Tasks;
 using EncodeLibrary.Huffman;
-using ZandronumServersDataCollector.Extensions;
 
 namespace ZandronumServersDataCollector.ServerListFetchers {
     public partial class ServerListFetcher {

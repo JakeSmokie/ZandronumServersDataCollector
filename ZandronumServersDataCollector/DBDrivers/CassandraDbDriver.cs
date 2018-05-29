@@ -2,7 +2,6 @@
 using System.Collections.Generic;
 using System.Net;
 using Cassandra;
-using ZandronumServersDataCollector.Extensions;
 using ZandronumServersDataCollector.ServerDataFetchers;
 
 namespace ZandronumServersDataCollector.DBDrivers {
