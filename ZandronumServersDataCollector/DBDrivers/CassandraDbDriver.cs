@@ -6,7 +6,7 @@ using ZandronumServersDataCollector.Extensions;
 using ZandronumServersDataCollector.ServerDataFetchers;
 
 namespace ZandronumServersDataCollector.DBDrivers {
-    public class DbDriver {
+    public class CassandraDbDriver : IDbDriver {
         private Cluster _cluster;
         private ISession _session;
         private PreparedStatement _insertPreparedStatement;

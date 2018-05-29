@@ -23,7 +23,7 @@ namespace ZandronumServersDataCollector {
                 serverDataFetcher.FetchServerData(serverAddresses, serverDatas);
                 Console.WriteLine($"Got {serverDatas.Count} servers data.");
 
-                var dbDriver = new DbDriver();
+                var dbDriver = new CassandraDbDriver();
                 dbDriver.Connect();
 
                 foreach (var server in serverDatas) {
