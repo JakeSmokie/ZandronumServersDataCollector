@@ -1,8 +1,7 @@
-﻿using System.Collections.Generic;
-using System.IO;
+﻿using System.IO;
 using System.Text;
 
-namespace ZandronumServersDataCollector.Extensions {
+namespace ZSharedLib.Extensions {
     public static class BinaryReaderExtension {
         public static string ReadNullTerminatedString(this BinaryReader reader) {
             var buffer = new MemoryStream();

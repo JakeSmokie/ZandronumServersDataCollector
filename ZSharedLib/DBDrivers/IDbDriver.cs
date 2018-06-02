@@ -1,7 +1,7 @@
 ﻿using System.Collections.Generic;
-using ZandronumServersDataCollector.ServerDataFetchers;
+using ZSharedLib.Structures;
 
-namespace ZandronumServersDataCollector.DBDrivers {
+namespace ZSharedLib.DBDrivers {
     public interface IDbDriver {
         void Connect();
         void InsertServerData(ServerData serverData);

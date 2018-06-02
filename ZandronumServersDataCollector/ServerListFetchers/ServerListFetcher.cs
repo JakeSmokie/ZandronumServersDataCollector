@@ -8,7 +8,7 @@ using System.Threading;
 using EncodeLibrary.Huffman;
 
 namespace ZandronumServersDataCollector.ServerListFetchers {
-    public partial class ServerListFetcher {
+    public sealed partial class ServerListFetcher : IServerListFetcher {
         /// <summary>
         /// Timeout in milliseconds
         /// </summary>

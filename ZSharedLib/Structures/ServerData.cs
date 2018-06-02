@@ -2,7 +2,7 @@
 using System.Collections.Generic;
 using System.Net;
 
-namespace ZandronumServersDataCollector.ServerDataFetchers {
+namespace ZSharedLib.Structures {
     public class ServerData {
         public DateTime LogTime;
         public IPEndPoint Address;

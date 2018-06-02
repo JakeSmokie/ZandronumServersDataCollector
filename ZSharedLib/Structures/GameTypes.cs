@@ -1,4 +1,4 @@
-﻿namespace ZandronumServersDataCollector.ServerDataFetchers {
+﻿namespace ZSharedLib.Structures {
     public enum GameTypes : byte {
         Cooperative,
         Survival,

@@ -2,9 +2,9 @@
 using System.Collections.Generic;
 using System.Net;
 using Cassandra;
-using ZandronumServersDataCollector.ServerDataFetchers;
+using ZSharedLib.Structures;
 
-namespace ZandronumServersDataCollector.DBDrivers {
+namespace ZSharedLib.DBDrivers {
     public class CassandraDbDriver : IDbDriver {
         private Cluster _cluster;
         private ISession _session;

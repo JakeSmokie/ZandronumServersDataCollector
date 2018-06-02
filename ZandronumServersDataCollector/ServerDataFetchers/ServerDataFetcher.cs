@@ -6,10 +6,11 @@ using System.Net;
 using System.Net.Sockets;
 using System.Threading;
 using EncodeLibrary.Huffman;
-using ZandronumServersDataCollector.Extensions;
+using ZSharedLib.Extensions;
+using ZSharedLib.Structures;
 
 namespace ZandronumServersDataCollector.ServerDataFetchers {
-    public partial class ServerDataFetcher {
+    public sealed partial class ServerDataFetcher : IServerDataFetcher {
         /// <summary>
         /// Timeout for connection to server in milliseconds
         /// </summary>

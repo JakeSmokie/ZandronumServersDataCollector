@@ -3,33 +3,39 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Threading;
-using ZandronumServersDataCollector.DBDrivers;
 using ZandronumServersDataCollector.ServerDataFetchers;
 using ZandronumServersDataCollector.ServerListFetchers;
+using ZSharedLib.DBDrivers;
+using ZSharedLib.Structures;
 
 namespace ZandronumServersDataCollector {
-    internal class Program {
+    internal sealed class Program {
+        private static IServerListFetcher _serverListFetcher;
+        private static IServerDataFetcher _serverDataFetcher;
+        private static IDbDriver _dbDriver;
+        private static List<ServerData> _serverDatas;
+
         private const int ServersUpdateInteval = 5000;
 
         private static void Main(string[] args) {
-            var serverListFetcher = new ServerListFetcher();
-            var serverDataFetcher = new ServerDataFetcher();
+            _serverListFetcher = new ServerListFetcher();
+            _serverDataFetcher = new ServerDataFetcher();
 
-            var serverDatas = new List<ServerData>();
+            _serverDatas = new List<ServerData>();
 
-            var dbDriver = new CassandraDbDriver();
-            dbDriver.Connect();
+            _dbDriver = new CassandraDbDriver();
+            _dbDriver.Connect();
 
             while (true) {
-                var serverAddresses = serverListFetcher.FetchServerList(("master.zandronum.com", 15300)).ToList();
-                serverDatas.Clear();
+                var serverAddresses = _serverListFetcher.FetchServerList(("master.zandronum.com", 15300)).ToList();
+                _serverDatas.Clear();
 
                 Console.WriteLine($"Got servers list. {serverAddresses?.Count} total");
-                serverDataFetcher.FetchServerData(serverAddresses, serverDatas);
-                Console.WriteLine($"Got {serverDatas.Count} servers data.");
+                _serverDataFetcher.FetchServerData(serverAddresses, _serverDatas);
+                Console.WriteLine($"Got {_serverDatas.Count} servers data.");
             
-                foreach (var server in serverDatas) {
-                    new Thread(() => { dbDriver.InsertServerData(server); }).Start();
+                foreach (var server in _serverDatas) {
+                    new Thread(() => { _dbDriver.InsertServerData(server); }).Start();
                 }
 
                 GC.Collect();

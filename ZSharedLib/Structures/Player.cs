@@ -1,4 +1,4 @@
-﻿namespace ZandronumServersDataCollector.ServerDataFetchers {
+﻿namespace ZSharedLib.Structures {
     public struct Player {
         public string Name { get; set; }
         public short Score { get; set; }
