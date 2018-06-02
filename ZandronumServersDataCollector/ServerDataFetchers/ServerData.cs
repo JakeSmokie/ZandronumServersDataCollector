@@ -10,6 +10,15 @@ namespace ZandronumServersDataCollector.ServerDataFetchers {
         public string Version;
         public string Name;
         public List<string> PWads;
+        public string Map;
+        public byte MaxClients;
+        public bool ForcePassword;
+        public byte NumPlayers;
+        public Player[] Players;
+        public int[] Flags;
+        public string Iwad;
+        public byte Skill;
+        public GameTypes GameType;
 
         public override string ToString() {
             return $"{nameof(Address)}: {Address}, {nameof(Ping)}: {Ping}, {nameof(Version)}: {Version}, {nameof(Name)}: {Name}";

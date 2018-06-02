@@ -31,6 +31,8 @@ namespace ZandronumServersDataCollector.ServerDataFetchers {
         private readonly object _lockObject = new object();
 
         public void FetchServerData(IEnumerable<IPEndPoint> servers, List<ServerData> serverDatasCollection) {
+            _lastUsedPort = 40000;
+
             var threads = new List<Thread>();
 
             foreach (var server in servers) {
@@ -142,6 +144,14 @@ namespace ZandronumServersDataCollector.ServerDataFetchers {
                 serverData.Name = response.ReadNullTerminatedString();
             }
 
+            if (flags.HasFlag(ZandronumQueryFlags.Mapname)) {
+                serverData.Map = response.ReadNullTerminatedString();
+            }
+
+            if (flags.HasFlag(ZandronumQueryFlags.Maxclients)) {
+                serverData.MaxClients = response.ReadByte();
+            }
+
             if (flags.HasFlag(ZandronumQueryFlags.Pwads)) {
                 var pwadsAmount = response.ReadByte();
                 serverData.PWads = new List<string>();
@@ -151,8 +161,69 @@ namespace ZandronumServersDataCollector.ServerDataFetchers {
                 }
             }
 
+            if (flags.HasFlag(ZandronumQueryFlags.Gametype)) {
+                serverData.GameType = (GameTypes) response.ReadByte();
+
+                // read unused bytes for instagib and buckshot
+                response.ReadBytes(2);
+            }
+
+            if (flags.HasFlag(ZandronumQueryFlags.Iwad)) {
+                serverData.Iwad = response.ReadNullTerminatedString();
+            }
+
+            if (flags.HasFlag(ZandronumQueryFlags.Forcepassword)) {
+                serverData.ForcePassword = response.ReadByte() != 0;
+            }
+
+            if (flags.HasFlag(ZandronumQueryFlags.Gameskill)) {
+                serverData.Skill = response.ReadByte();
+            }
+
+            if (flags.HasFlag(ZandronumQueryFlags.Numplayers)) {
+                serverData.NumPlayers = response.ReadByte();
+            }
+
+            if (flags.HasFlag(ZandronumQueryFlags.Playerdata)) {
+                serverData.Players = new Player[serverData.NumPlayers];
+
+                for (var i = 0; i < serverData.NumPlayers; i++) {
+                    var player = new Player {
+                        Name = response.ReadNullTerminatedString(),
+                        Score = response.ReadInt16(),
+                        Ping = response.ReadInt16(),
+                        IsSpectator = response.ReadByte() != 0,
+                        IsBot = response.ReadByte() != 0,
+                        Team = IsTeamGame(serverData.GameType) ? response.ReadSByte() : (sbyte) -1,
+                        PlayTime = response.ReadSByte()
+                    };
+
+                    serverData.Players[i] = player;
+                }
+            }
+
+            if (flags.HasFlag(ZandronumQueryFlags.AllDmflags)) {
+                var amount = response.ReadByte();
+                serverData.Flags = new int[amount];
+
+                for (var i = 0; i < amount; i++) {
+                    serverData.Flags[i] = response.ReadInt32();
+                }
+            }
+
             serverData.LogTime = DateTime.Now;
             serverDatasCollection.Add(serverData);
+        }
+
+        static bool IsTeamGame(GameTypes gameType) {
+            return gameType == GameTypes.Teamplay ||
+                   gameType == GameTypes.Teamgame ||
+                   gameType == GameTypes.Teamlms ||
+                   gameType == GameTypes.Teampossession ||
+                   gameType == GameTypes.Skulltag ||
+                   gameType == GameTypes.Ctf ||
+                   gameType == GameTypes.Oneflagctf ||
+                   gameType == GameTypes.Domination;
         }
     }
 }

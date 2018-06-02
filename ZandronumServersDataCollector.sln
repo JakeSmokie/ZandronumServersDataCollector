@@ -8,26 +8,34 @@ EndProject
 Project("{888888A0-9F3D-457C-B088-3A5042F75D52}") = "PythonHuffmanTest", "PythonHuffmanTest\PythonHuffmanTest.pyproj", "{A3A1A658-6D52-4B62-83E3-672163D3D63E}"
 EndProject
 Global
-	GlobalSection(Performance) = preSolution
-		HasPerformanceSessions = true
-	EndGlobalSection
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
+		Debug|x64 = Debug|x64
 		Release|Any CPU = Release|Any CPU
+		Release|x64 = Release|x64
 	EndGlobalSection
 	GlobalSection(ProjectConfigurationPlatforms) = postSolution
 		{2D834F85-A9F9-45AF-8D19-D5EBF0889014}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
 		{2D834F85-A9F9-45AF-8D19-D5EBF0889014}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{2D834F85-A9F9-45AF-8D19-D5EBF0889014}.Debug|x64.ActiveCfg = Debug|x64
+		{2D834F85-A9F9-45AF-8D19-D5EBF0889014}.Debug|x64.Build.0 = Debug|x64
 		{2D834F85-A9F9-45AF-8D19-D5EBF0889014}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{2D834F85-A9F9-45AF-8D19-D5EBF0889014}.Release|Any CPU.Build.0 = Release|Any CPU
+		{2D834F85-A9F9-45AF-8D19-D5EBF0889014}.Release|x64.ActiveCfg = Release|x64
+		{2D834F85-A9F9-45AF-8D19-D5EBF0889014}.Release|x64.Build.0 = Release|x64
 		{A3A1A658-6D52-4B62-83E3-672163D3D63E}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{A3A1A658-6D52-4B62-83E3-672163D3D63E}.Debug|x64.ActiveCfg = Debug|Any CPU
 		{A3A1A658-6D52-4B62-83E3-672163D3D63E}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{A3A1A658-6D52-4B62-83E3-672163D3D63E}.Release|x64.ActiveCfg = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
 		SolutionGuid = {E93EAA0B-21FE-4B9E-8FD5-E35CDF3CA9A1}
+	EndGlobalSection
+	GlobalSection(Performance) = preSolution
+		HasPerformanceSessions = true
 	EndGlobalSection
 	GlobalSection(Performance) = preSolution
 		HasPerformanceSessions = true

@@ -16,9 +16,17 @@ namespace ZandronumServersDataCollector.DBDrivers {
                 .Build();
 
             _session = _cluster.Connect("sdf");
+
+            _session.UserDefinedTypes.Define(
+                UdtMap.For<Player>()
+                    .SetIgnoreCase(true)
+            );
+
             _insertPreparedStatement =
                 _session.Prepare(
-                    "INSERT INTO servers (logged_at, ip, port, name, ping, version) VALUES (?, ?, ?, ?, ?, ?);");
+                    "INSERT INTO servers (" +
+                    "logged_at, ip, port, name, ping, version, pwads, map, maxclients, password, numplayers, players, flags, iwad, skill, gametype) " +
+                    "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?);");
         }
 
         public void InsertServerData(ServerData serverData) {
@@ -29,15 +37,25 @@ namespace ZandronumServersDataCollector.DBDrivers {
                     (short) serverData.Address.Port,
                     serverData.Name,
                     serverData.Ping,
-                    serverData.Version);
+                    serverData.Version,
+                    serverData.PWads,
+                    serverData.Map,
+                    (sbyte) serverData.MaxClients,
+                    serverData.ForcePassword,
+                    (sbyte) serverData.NumPlayers,
+                    serverData.Players,
+                    serverData.Flags,
+                    serverData.Iwad,
+                    (sbyte) serverData.Skill,
+                    (sbyte) serverData.GameType);
 
             _session.Execute(statement);
         }
 
         public IEnumerable<ServerData> SelectServerData() {
-            var rs = _session.Execute("SELECT * FROM servers");
+            var resultSet = _session.Execute("SELECT * FROM servers");
 
-            foreach (var server in rs) {
+            foreach (var server in resultSet) {
                 var serverData = new ServerData {
                     LogTime = server.GetValue<DateTime>("logged_at"),
                     Address = new IPEndPoint(

@@ -5,15 +5,16 @@ using System.Text;
 namespace ZandronumServersDataCollector.Extensions {
     public static class BinaryReaderExtension {
         public static string ReadNullTerminatedString(this BinaryReader reader) {
-            var buffer = new List<byte>();
-            byte b;
+            var buffer = new MemoryStream();
 
-            do {
-                b = reader.ReadByte();
-                buffer.Add(b);
-            } while (b != '\0');
+            while (true) {
+                var b = reader.ReadByte();
 
-            buffer.RemoveAt(buffer.Count - 1);
+                if (b == '\0')
+                    break;
+
+                buffer.WriteByte(b);
+            }
 
             return Encoding.UTF8.GetString(buffer.ToArray());
         }

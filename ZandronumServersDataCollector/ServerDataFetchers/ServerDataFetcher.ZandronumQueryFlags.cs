@@ -33,7 +33,9 @@
             Deh = 0x40000000,
 
             Standardquery =
-                Name | Pwads
+                Name | Mapname | Maxclients | Gametype |
+                Pwads | Iwad | Forcepassword | Gameskill |
+                Numplayers | Playerdata | AllDmflags
         };
     }
 }
