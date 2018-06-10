@@ -216,7 +216,7 @@ namespace ZandronumServersDataCollector.ServerDataFetchers {
             serverDatasCollection.Add(serverData);
         }
 
-        static bool IsTeamGame(GameTypes gameType) {
+        private static bool IsTeamGame(GameTypes gameType) {
             return gameType == GameTypes.Teamplay ||
                    gameType == GameTypes.Teamgame ||
                    gameType == GameTypes.Teamlms ||

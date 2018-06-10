@@ -1,10 +1,11 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 using ZSharedLib.Structures;
 
 namespace ZSharedLib.DBDrivers {
-    public interface IDbDriver {
+    public interface IDBDriver : IDisposable {
         void Connect();
-        void InsertServerData(ServerData serverData);
         IEnumerable<ServerData> SelectServerData();
+        void InsertServerData(IEnumerable<ServerData> serverDatas);
     }
 }

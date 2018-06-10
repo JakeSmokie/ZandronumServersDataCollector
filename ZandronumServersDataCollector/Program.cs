@@ -2,18 +2,21 @@
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
+using System.Net;
 using System.Threading;
 using ZandronumServersDataCollector.ServerDataFetchers;
 using ZandronumServersDataCollector.ServerListFetchers;
 using ZSharedLib.DBDrivers;
+using ZSharedLib.DBDrivers.PostgreSQLDBDriver;
 using ZSharedLib.Structures;
 
 namespace ZandronumServersDataCollector {
     internal sealed class Program {
         private static IServerListFetcher _serverListFetcher;
         private static IServerDataFetcher _serverDataFetcher;
-        private static IDbDriver _dbDriver;
+        private static IDBDriver _dbDriver;
         private static List<ServerData> _serverDatas;
+        private static List<IPEndPoint> _serverAddresses;
 
         private const int ServersUpdateInteval = 5000;
 
@@ -23,20 +26,18 @@ namespace ZandronumServersDataCollector {
 
             _serverDatas = new List<ServerData>();
 
-            _dbDriver = new CassandraDbDriver();
+            _dbDriver = new PostgreSQLDBDriver();
             _dbDriver.Connect();
 
             while (true) {
-                var serverAddresses = _serverListFetcher.FetchServerList(("master.zandronum.com", 15300)).ToList();
+                _serverAddresses = _serverListFetcher.FetchServerList(("master.zandronum.com", 15300)).ToList();
                 _serverDatas.Clear();
 
-                Console.WriteLine($"Got servers list. {serverAddresses?.Count} total");
-                _serverDataFetcher.FetchServerData(serverAddresses, _serverDatas);
+                Console.WriteLine($"Got servers list. {_serverAddresses.Count} total");
+                _serverDataFetcher.FetchServerData(_serverAddresses, _serverDatas);
                 Console.WriteLine($"Got {_serverDatas.Count} servers data.");
-            
-                foreach (var server in _serverDatas) {
-                    new Thread(() => { _dbDriver.InsertServerData(server); }).Start();
-                }
+
+                _dbDriver.InsertServerData(_serverDatas);
 
                 GC.Collect();
                 Thread.Sleep(ServersUpdateInteval);

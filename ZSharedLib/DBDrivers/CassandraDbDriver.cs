@@ -5,7 +5,7 @@ using Cassandra;
 using ZSharedLib.Structures;
 
 namespace ZSharedLib.DBDrivers {
-    public class CassandraDbDriver : IDbDriver {
+    public sealed class CassandraDBDriver : IDBDriver {
         private Cluster _cluster;
         private ISession _session;
         private PreparedStatement _insertPreparedStatement;
@@ -29,27 +29,29 @@ namespace ZSharedLib.DBDrivers {
                     "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?);");
         }
 
-        public void InsertServerData(ServerData serverData) {
-            var statement = _insertPreparedStatement
-                .Bind(
-                    serverData.LogTime,
-                    serverData.Address.Address,
-                    (short) serverData.Address.Port,
-                    serverData.Name,
-                    serverData.Ping,
-                    serverData.Version,
-                    serverData.PWads,
-                    serverData.Map,
-                    (sbyte) serverData.MaxClients,
-                    serverData.ForcePassword,
-                    (sbyte) serverData.NumPlayers,
-                    serverData.Players,
-                    serverData.Flags,
-                    serverData.Iwad,
-                    (sbyte) serverData.Skill,
-                    (sbyte) serverData.GameType);
+        public void InsertServerData(IEnumerable<ServerData> serverDatas) {
+            //var statement = _insertPreparedStatement
+            //    .Bind(
+            //        serverData.LogTime,
+            //        serverData.Address.Address,
+            //        (short) serverData.Address.Port,
+            //        serverData.Name,
+            //        serverData.Ping,
+            //        serverData.Version,
+            //        serverData.PWads,
+            //        serverData.Map,
+            //        (sbyte) serverData.MaxClients,
+            //        serverData.ForcePassword,
+            //        (sbyte) serverData.NumPlayers,
+            //        serverData.Players,
+            //        serverData.Flags,
+            //        serverData.Iwad,
+            //        (sbyte) serverData.Skill,
+            //        (sbyte) serverData.GameType);
 
-            _session.Execute(statement);
+            //_session.Execute(statement);
+
+            throw new NotImplementedException();
         }
 
         public IEnumerable<ServerData> SelectServerData() {
@@ -68,6 +70,11 @@ namespace ZSharedLib.DBDrivers {
 
                 yield return serverData;
             }
+        }
+
+        public void Dispose() {
+            _cluster?.Dispose();
+            _session?.Dispose();
         }
     }
 }
