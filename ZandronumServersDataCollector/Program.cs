@@ -33,9 +33,9 @@ namespace ZandronumServersDataCollector {
                 _serverAddresses = _serverListFetcher.FetchServerList(("master.zandronum.com", 15300)).ToList();
                 _serverDatas.Clear();
 
-                Console.WriteLine($"Got servers list. {_serverAddresses.Count} total");
+                Console.WriteLine($"[{DateTime.Now}] Got servers list. {_serverAddresses.Count} total");
                 _serverDataFetcher.FetchServerData(_serverAddresses, _serverDatas);
-                Console.WriteLine($"Got {_serverDatas.Count} servers data.");
+                Console.WriteLine($"[{DateTime.Now}] Got {_serverDatas.Count} servers data.");
 
                 _dbDriver.InsertServerData(_serverDatas);
 
